@@ -153,28 +153,48 @@ function formatResistance(value) {
 }
 
 function updateGraphicAndCalculate() {
-    const graphic = document.getElementById('resistor-graphic');
+    const graphicBands = document.getElementById('resistor-graphic-bands');
     const output = document.getElementById('color-output');
+    const svgBg = document.getElementById('svg-resistor-bg');
     
     // Change body color slightly based on bands
-    if (currentBands >= 5) {
-        graphic.classList.add('blue-body');
-    } else {
-        graphic.classList.remove('blue-body');
+    if (svgBg) {
+        if (currentBands >= 5) {
+            svgBg.setAttribute('fill', '#a3c2ce');
+        } else {
+            svgBg.setAttribute('fill', '#e4d5b7');
+        }
     }
+
+    // Map of CSS variable colors or standard hex
+    const colorHex = {
+        black: '#000000', brown: '#8B4513', red: '#FF0000', orange: '#FFA500',
+        yellow: '#FFFF00', green: '#008000', blue: '#0000FF', violet: '#EE82EE',
+        grey: '#808080', white: '#FFFFFF', gold: '#FFD700', silver: '#C0C0C0'
+    };
 
     // Graphic
     let graphicHtml = '';
+    
+    let bandPositions = [];
+    if (currentBands === 4) {
+        bandPositions = [85, 135, 185, 295]; 
+    } else if (currentBands === 5) {
+        bandPositions = [85, 125, 165, 205, 295];
+    } else if (currentBands === 6) {
+        bandPositions = [85, 120, 155, 190, 225, 295];
+    }
+
     selectedColors.forEach((colorName, idx) => {
         let cssColor = colorData.find(c => c.name === colorName).name;
-        // Make the gap between bands look better
-        let margin = '0';
-        if (idx === currentBands - 1) {
-            margin = '0 0 0 10%'; // gap before tolerance/last band
-        }
-        graphicHtml += `<div class="band-line c-${cssColor}" style="margin: ${margin}"></div>`;
+        let fill = colorHex[cssColor] || '#000';
+        let x = bandPositions[idx];
+        graphicHtml += `<rect x="${x}" y="0" width="16" height="120" fill="${fill}" />`;
     });
-    graphic.innerHTML = graphicHtml;
+    
+    if (graphicBands) {
+        graphicBands.innerHTML = graphicHtml;
+    }
 
     // Calculation
     let value = 0;
