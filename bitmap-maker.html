@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Necronlabs | Bitmap Maker</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=VT323&family=Silkscreen:wght@400;700&family=DotGothic16&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="index.css">
+    
+    <!-- Image2cpp core files -->
+    <script src="js/dithering.js" defer></script>
+    <script src="js/image2cpp.js" defer></script>
+    <script src="js/bitmap-editor.js" defer></script>
+    
+    <style>
+        header {
+            background: rgba(15, 15, 17, 0.92) !important;
+            backdrop-filter: blur(12px) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            padding: 0.75rem 4vw !important;
+        }
+        /* Specific overrides for the embedded image2cpp to fit dark theme */
+        .terminal-body input, .terminal-body select, .terminal-body button {
+            background: #1f1f23;
+            color: #fff;
+            border: 1px solid var(--surface-color);
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px;
+            font-family: var(--font-body);
+        }
+        .terminal-body button {
+            cursor: pointer;
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+            transition: all 0.2s ease;
+        }
+        .terminal-body button:hover {
+            background: rgba(201, 24, 43, 0.2);
+        }
+        .table-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 1rem;
+        }
+        .table-cell:first-child {
+            width: 30%;
+            font-weight: 600;
+        }
+        .table-cell:last-child {
+            width: 70%;
+        }
+        @media (max-width: 768px) {
+            .table-cell:first-child, .table-cell:last-child { width: 100%; }
+        }
+        .msg, .note, .file-info {
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .error-msg {
+            color: var(--accent-red);
+        }
+        .image-size-thumb {
+            max-width: 64px;
+            max-height: 64px;
+            margin-right: 1rem;
+            image-rendering: pixelated;
+            border: 1px solid #333;
+        }
+        .file-input-entry, .image-size-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .code-output {
+            width: 100%;
+            height: 220px;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            border: 1px solid var(--surface-color);
+            padding: 1rem;
+            font-family: 'Courier New', Courier, monospace;
+            resize: vertical;
+        }
+        
+        .bitmap-layout-grid {
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 2rem; 
+            align-items: start;
+        }
+
+        @media (max-width: 992px) {
+            .bitmap-layout-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        ul { list-style: none; padding: 0; }
+        
+        /* Pixel-Grid Bitmap Editor Styles */
+        .active-tool {
+            background: var(--accent-red) !important;
+            color: #fff !important;
+            border-color: var(--accent-red) !important;
+            box-shadow: 0 0 10px rgba(201, 24, 43, 0.4);
+        }
+        .preview-zoom-btn {
+            background: #1f1f23;
+            color: #aaa;
+            border: 1px solid var(--surface-color);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .preview-zoom-btn.active {
+            background: var(--accent-red) !important;
+            color: #fff !important;
+            border-color: var(--accent-red);
+        }
+        .editor-btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            align-items: center;
+        }
+        .editor-btn-group button {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.82rem;
+            cursor: pointer;
+        }
+        #drawingCanvas {
+            image-rendering: pixelated;
+            display: block;
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.15);
+            background: #0a0a0d;
+            cursor: crosshair;
+        }
+        .canvas-scroll-container {
+            max-height: 52vh;
+            overflow: auto;
+            border: 1px solid var(--surface-color);
+            background: #08080b;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        .editor-toolbar-section {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 4px;
+            padding: 0.5rem 0.75rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="vanta-bg"></div>
+
+    <header>
+        <nav class="nav-links">
+            <a href="index.html#home" class="gsap-link">Home</a>
+            <a href="projects.html" class="gsap-link">Projects</a>
+            <a href="tools.html" class="gsap-link active" style="color: var(--accent-color);">Tools</a>
+            <a href="about.html" class="gsap-link">About Me</a>
+            <a href="contact.html" class="gsap-link">Contact</a>
+        </nav>
+        <div class="header-right" style="display: flex; align-items: center; gap: 1.5rem;">
+            <div class="logo">
+                <a href="index.html"><img src="images/logo.jpg" alt="NecronLabs Logo"></a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="padding-top: 80px; min-height: 100vh;">
+        <section class="projects">
+            <h1 class="section-title gsap-reveal" style="font-family: var(--font-pixel); color: var(--accent-red); margin-top: 0; margin-bottom: 0.35rem;">BITMAP MAKER</h1>
+            <p class="gsap-reveal" style="color: var(--text-secondary); margin-bottom: 1.25rem;">Convert images to C byte arrays for OLEDs (SSD1306/U8g2) or draw your own pixel art in the browser.</p>
+            
+            <div class="bitmap-layout-grid">
+                
+                <!-- Left Column -->
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                
+                <!-- Pixel-Grid Bitmap Editor Modal (Modeled after pkolt/bitmap_editor) -->
+                <div id="paintModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;">
+                    <div class="terminal-box" style="max-width: 980px; width: 95vw; max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--accent-red); box-shadow: 0 0 35px rgba(201, 24, 43, 0.3);">
+                        <div class="terminal-header" style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span class="dot red" onclick="document.getElementById('paintModal').style.display='none'" style="cursor:pointer;" title="Close"></span>
+                                <span class="dot yellow"></span><span class="dot green"></span>
+                                <span class="terminal-title" style="margin-left: 0.5rem;">bitmap_editor.exe // 1-bit OLED Pixel Grid Studio</span>
+                            </div>
+                            <span onclick="document.getElementById('paintModal').style.display='none'" style="cursor: pointer; color: #888; font-weight: bold; font-size: 1.1rem; padding: 0 0.5rem;">&times;</span>
+                        </div>
+                        <div class="terminal-body" style="overflow-y: auto; flex-grow: 1; padding: 1rem 1.25rem;">
+                            
+                            <!-- Top Toolbar -->
+                            <div class="editor-toolbar-section">
+                                <!-- Tool Buttons -->
+                                <div class="editor-btn-group">
+                                    <button type="button" id="paintToolDraw" class="active-tool" title="Draw 1-bit pixels (Key: D)">✏️ Draw</button>
+                                    <button type="button" id="paintToolErase" title="Erase pixels / Right-click (Key: E)">🧹 Erase</button>
+                                    <button type="button" id="paintToolBucket" title="Flood Fill area (Key: B)">🪣 Bucket</button>
+                                    <button type="button" id="paintToolLine" title="Draw straight lines">📏 Line</button>
+                                    <button type="button" id="paintToolRect" title="Draw rectangle frame">🔲 Rect</button>
+                                </div>
+
+                                <div style="height: 24px; width: 1px; background: rgba(255,255,255,0.15);"></div>
+
+                                <!-- Operations -->
+                                <div class="editor-btn-group">
+                                    <button type="button" id="paintUndoBtn" title="Undo (Ctrl+Z)">↩️ Undo</button>
+                                    <button type="button" id="paintRedoBtn" title="Redo (Ctrl+Y)">↪️ Redo</button>
+                                    <button type="button" id="paintToolInvert" title="Invert entire bitmap (Key: I)">◩ Invert</button>
+                                    <button type="button" id="paintToolClear" title="Clear canvas to 0">🗑️ Clear</button>
+                                </div>
+
+                                <div style="height: 24px; width: 1px; background: rgba(255,255,255,0.15);"></div>
+
+                                <!-- Nudge / Move -->
+                                <div class="editor-btn-group">
+                                    <span style="font-size: 0.8rem; color: #888;">Move:</span>
+                                    <button type="button" id="paintMoveUp" title="Shift Up (Up Arrow)">▲</button>
+                                    <button type="button" id="paintMoveDown" title="Shift Down (Down Arrow)">▼</button>
+                                    <button type="button" id="paintMoveLeft" title="Shift Left (Left Arrow)">◄</button>
+                                    <button type="button" id="paintMoveRight" title="Shift Right (Right Arrow)">►</button>
+                                </div>
+                            </div>
+
+                            <!-- Secondary Toolbar: Dimensions, Grid, Zoom & Theme -->
+                            <div class="editor-toolbar-section" style="justify-content: space-between;">
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+                                    <label style="font-size: 0.82rem;">Preset:
+                                        <select id="paintPresetSelect" style="padding: 0.25rem 0.5rem; margin-left: 0.35rem;">
+                                            <option value="128x64" selected>128x64 (SSD1306 OLED)</option>
+                                            <option value="128x32">128x32 (0.91" OLED)</option>
+                                            <option value="64x48">64x48 (0.66" OLED)</option>
+                                            <option value="84x48">84x48 (Nokia 5110)</option>
+                                            <option value="96x16">96x16 (Ribbon OLED)</option>
+                                            <option value="64x64">64x64 (Square)</option>
+                                            <option value="32x32">32x32 (Sprite)</option>
+                                            <option value="16x16">16x16 (Icon / Glyph)</option>
+                                        </select>
+                                    </label>
+
+                                    <div style="display: flex; gap: 0.35rem; align-items: center; font-size: 0.82rem;">
+                                        <span>Size:</span>
+                                        <input type="number" id="paintCanvasWidth" value="128" min="1" max="256" style="width: 55px; padding: 0.25rem 0.4rem;"> &times;
+                                        <input type="number" id="paintCanvasHeight" value="64" min="1" max="256" style="width: 55px; padding: 0.25rem 0.4rem;">
+                                        <button type="button" id="paintApplySizeBtn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Apply</button>
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; font-size: 0.82rem;">
+                                    <label><input type="checkbox" id="paintToggleGrid" checked> 1px Grid</label>
+                                    <label title="8-pixel boundary lines (pkolt/bitmap_editor byte separation)"><input type="checkbox" id="paintToggleByteGrid" checked> 8px Byte Grid</label>
+                                    
+                                    <label>Theme:
+                                        <select id="paintThemeSelect" style="padding: 0.2rem 0.4rem;">
+                                            <option value="oled" selected>OLED Cyan</option>
+                                            <option value="bw">Classic B&W</option>
+                                        </select>
+                                    </label>
+
+                                    <label style="display: flex; align-items: center; gap: 0.4rem;">
+                                        Zoom:
+                                        <input type="range" id="paintZoomSlider" min="4" max="20" value="9" style="width: 75px;">
+                                        <span id="paintZoomValue" style="color: var(--accent-red); font-size: 0.8rem;">9px</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Canvas Container with Real-Time Mini Preview -->
+                            <div style="position: relative;">
+                                <div class="canvas-scroll-container">
+                                    <canvas id="drawingCanvas" width="1152" height="576"></canvas>
+                                </div>
+
+                                <!-- Floating 1:1 Hardware Mini Preview -->
+                                <div style="position: absolute; bottom: 12px; right: 12px; background: rgba(10, 10, 13, 0.9); border: 1px solid var(--surface-color); padding: 0.5rem; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); pointer-events: none;">
+                                    <div style="font-size: 0.7rem; color: #888; margin-bottom: 0.3rem; text-transform: uppercase;">1:1 Hardware Preview</div>
+                                    <canvas id="miniOledPreview" width="128" height="64" style="background: #000; border: 1px solid #333; display: block;"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Status and Actions -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-top: 1rem; gap: 1rem;">
+                                <div id="paintStatusInfo" class="note" style="font-family: monospace; color: #00f0ff;">
+                                    128x64 px | X: --, Y: -- | Active: 0 px | Memory: 1024 bytes
+                                </div>
+
+                                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                                    <button type="button" id="paintExportBtn" style="border-color: #00f0ff; color: #00f0ff; font-weight: 600; padding: 0.5rem 1rem;">📋 Copy C Array</button>
+                                    <button type="button" id="paintSendBtn" style="border-color: #27c93f; color: #27c93f; font-weight: bold; padding: 0.5rem 1.25rem;">Send to Converter &gt;&gt;</button>
+                                    <button type="button" onclick="document.getElementById('paintModal').style.display='none'" style="padding: 0.5rem 1rem;">Close</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 1: Input -->
+                <div class="terminal-box gsap-reveal" id="step-1">
+                    <div class="terminal-header">
+                        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                        <span class="terminal-title">1_select_image.sh</span>
+                    </div>
+                    <div class="terminal-body">
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+                            <div id="file-input-column">
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                                    <div>
+                                        <h3>Upload Image</h3>
+                                        <p class="note">Import multiple images or draw pixel art in the bitmap studio.</p>
+                                    </div>
+                                    <button type="button" onclick="document.getElementById('paintModal').style.display='flex'" style="border-color: var(--accent-red); color: var(--accent-red); font-weight: bold; padding: 0.5rem 1rem;">+ Draw Image</button>
+                                </div>
+                                <input type="file" id="file-input" name="file-input" multiple accept="image/*" style="width: 100%; margin-top: 1rem;"/>
+                                <div id="only-images-file-error" class="msg error-msg" style="display:none; margin-top: 0.5rem;">Only image files are allowed.</div>
+                                <div id="no-images-error" class="msg error-msg" style="display:none; margin-top: 0.5rem;">Please upload or draw an image first.</div>
+                                <div id="continue-note" class="note" style="display:none; color: #00f0ff; margin-top: 0.5rem;">✓ Image loaded successfully into pipeline.</div>
+                                
+                                <div id="file-input-column-items" style="margin-top: 1rem;"></div>
+                                <template id="file-input-entry-template">
+                                    <div class="file-input-entry" style="margin-bottom: 0.75rem; border: 1px dashed var(--surface-color); padding: 0.5rem; border-radius: 4px;">
+                                        <img class="image-size-thumb" alt="" />
+                                        <span class="js-label" style="flex-grow: 1; margin: 0 1rem; font-family: monospace; font-size: 0.9rem;"></span>
+                                        <button type="button" class="remove-button js-remove" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">remove</button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Settings -->
+                <div class="terminal-box gsap-reveal" id="step-2">
+                    <div class="terminal-header">
+                        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                        <span class="terminal-title">2_image_settings.cfg</span>
+                    </div>
+                    <div class="terminal-body">
+                        <div class="table">
+                            <div class="table-row">
+                                <div class="table-cell">Display Resolution:</div>
+                                <div class="table-cell">
+                                    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
+                                        <select id="displayResolutionPreset" onchange="window.applyDisplayResolutionPreset(this.value)" style="padding: 0.35rem 0.6rem; min-width: 250px;">
+                                            <option value="128x64" selected>128x64 (SSD1306 OLED - Standard)</option>
+                                            <option value="128x32">128x32 (0.91" OLED)</option>
+                                            <option value="64x48">64x48 (0.66" OLED)</option>
+                                            <option value="84x48">84x48 (Nokia 5110)</option>
+                                            <option value="96x16">96x16 (Ribbon OLED)</option>
+                                            <option value="64x64">64x64 (Square)</option>
+                                            <option value="32x32">32x32 (Sprite / Icon)</option>
+                                            <option value="16x16">16x16 (Glyph)</option>
+                                            <option value="original">Original Image Dimensions</option>
+                                        </select>
+                                        <div style="display: flex; gap: 0.35rem; align-items: center; font-size: 0.85rem;">
+                                            <span>Size:</span>
+                                            <input type="number" id="globalCanvasWidth" value="128" min="1" max="512" style="width: 65px; padding: 0.3rem 0.4rem;"> &times;
+                                            <input type="number" id="globalCanvasHeight" value="64" min="1" max="512" style="width: 65px; padding: 0.3rem 0.4rem;">
+                                            <button type="button" id="globalApplySizeBtn" onclick="window.applyCustomGlobalResolution()" style="padding: 0.3rem 0.65rem; font-size: 0.8rem; border-color: var(--accent-red); color: var(--accent-red); cursor: pointer;">Apply</button>
+                                        </div>
+                                    </div>
+                                    <p class="note">Automatically downscales high-resolution images (e.g. 437x441px) to fit target display.</p>
+                                </div>
+                            </div>
+
+                            <div class="table-row">
+                                <div class="table-cell">Canvas size(s):</div>
+                                <div class="table-cell">
+                                    <ul id="image-size-settings"></ul>
+                                    <template id="image-size-entry-template">
+                                        <li style="border: 1px dashed var(--surface-color); padding: 0.85rem; margin-bottom: 0.85rem; border-radius: 4px;">
+                                            <div class="image-size-row" style="margin-bottom: 0.5rem;">
+                                                <img class="image-size-thumb" alt="" />
+                                                <span class="file-name js-file-name" style="flex-grow:1; font-family: monospace; font-size: 0.9rem;"></span>
+                                                <button type="button" class="js-remove" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">remove</button>
+                                            </div>
+                                            <div class="image-size-row" style="margin-bottom: 0.5rem;">
+                                                <span style="display:inline-block; width: 60px;">Size:</span>
+                                                <input type="number" min="1" class="size-input js-width" name="width" style="width:80px;"/> &times;
+                                                <input type="number" min="1" class="size-input js-height" name="height" style="width:80px;"/>
+                                            </div>
+                                            <div class="image-size-row">
+                                                <span style="display:inline-block; width: 60px;">Glyph:</span>
+                                                <input type="text" class="js-glyph" name="glyph" style="flex-grow: 1; max-width: 200px;"/>
+                                            </div>
+                                        </li>
+                                    </template>
+                                    <div class="no-file-selected msg">No images selected.</div>
+                                    <p id="glyph-name-note" class="note" style="display:none; margin-top: 0.5rem;">Glyph identifiers are used for Arduino code generation.</p>
+                                    <button id="all-same-size" onclick="allSameSize()" style="margin-top: 0.75rem; display: none;">Apply first size to all</button>
+                                </div>
+                            </div>
+                            
+                            <div class="table-row">
+                                <div class="table-cell">Background color:</div>
+                                <div class="table-cell">
+                                    <label style="margin-right:1rem;"><input id="backgroundColorWhite" type="radio" name="backgroundColor" value="white" checked onchange="updateRadio('backgroundColor')"/> White</label>
+                                    <label style="margin-right:1rem;"><input id="backgroundColorBlack" type="radio" name="backgroundColor" value="black" onchange="updateRadio('backgroundColor')"/> Black</label>
+                                    <label><input id="backgroundColorTransparent" type="radio" name="backgroundColor" value="transparent" onchange="updateRadio('backgroundColor')"/> Transparent</label>
+                                </div>
+                            </div>
+
+                            <div class="table-row">
+                                <div class="table-cell">Scaling:</div>
+                                <div class="table-cell">
+                                    <select id="scale" name="scale" onchange="updateInteger('scale')" style="padding: 0.35rem 0.6rem; min-width: 250px;">
+                                        <option value="2" selected>scale to fit (preserve aspect ratio)</option>
+                                        <option value="1">original size (crop / 1:1)</option>
+                                        <option value="3">stretch to fill canvas</option>
+                                        <option value="4">stretch horizontally</option>
+                                        <option value="5">stretch vertically</option>
+                                    </select>
+                                    <p class="note" style="margin-top: 0.35rem;">"Scale to fit" ensures the whole image is visible within the canvas.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="table-row">
+                                <div class="table-cell">Center:</div>
+                                <div class="table-cell">
+                                    <label style="margin-right:1rem;"><input id="centerHorizontally" type="checkbox" checked onchange="updateBoolean('centerHorizontally')" /> Horizontally</label>
+                                    <label><input id="centerVertically" type="checkbox" checked onchange="updateBoolean('centerVertically')" /> Vertically</label>
+                                </div>
+                            </div>
+
+                            <div class="table-row">
+                                <div class="table-cell">Invert / Dithering:</div>
+                                <div class="table-cell">
+                                    <label><input id="invertColors" type="checkbox" onchange="updateBoolean('invertColors')" /> Invert Colors</label><br><br>
+                                    <select id="ditheringMode" onchange="updateInteger('ditheringMode')" style="margin-bottom: 0.5rem;">
+                                        <option value="0">Binary (Threshold)</option>
+                                        <option value="1">Bayer (Ordered)</option>
+                                        <option value="2">Floyd-Steinberg</option>
+                                        <option value="3">Atkinson</option>
+                                    </select><br>
+                                    <label>Threshold (0-255): <input id="ditheringThreshold" type="number" min="0" max="255" oninput="updateInteger('ditheringThreshold')" value="128" style="width: 80px;"/></label>
+                                </div>
+                            </div>
+                            
+                            <div class="table-row">
+                                <div class="table-cell">Transform:</div>
+                                <div class="table-cell">
+                                    <select id="rotation" name="rotation" onchange="updateInteger('rotation')" style="margin-bottom: 0.5rem;">
+                                        <option value="0">0 deg</option>
+                                        <option value="90">90 deg</option>
+                                        <option value="180">180 deg</option>
+                                        <option value="270">270 deg</option>
+                                    </select><br>
+                                    <label style="margin-right:1rem;"><input id="flipHorizontally" type="checkbox" onchange="updateBoolean('flipHorizontally')" /> Flip Horiz</label>
+                                    <label><input id="flipVertically" type="checkbox" onchange="updateBoolean('flipVertically')" /> Flip Vert</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Final Output Box -->
+                <div class="terminal-box gsap-reveal" id="step-5" style="margin-bottom: 2rem;">
+                    <div class="terminal-header">
+                        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                        <span class="terminal-title">5_compile_code.cpp</span>
+                    </div>
+                    <div class="terminal-body">
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+                            <button type="button" class="generate-button" onclick="generateOutputString()" style="border-color: #ffbd2e; color: #ffbd2e; font-weight: bold;">Generate Code</button>
+                            <button type="button" id="copy-button" onclick="copyOutput()">Copy Output</button>
+                            <button type="button" id="download-button" onclick="downloadBinFile()">Download .bin</button>
+                        </div>
+                        
+                        <textarea id="code-output" class="code-output" spellcheck="false" placeholder="Your C byte array will appear here..."></textarea>
+                        <span id="byte-count" class="note" style="display: block; text-align: right; margin-top: 0.5rem;">0 bytes</span>
+                    </div>
+                </div>
+
+                </div> <!-- End Left Column -->
+
+                <!-- Right Column: Sticky Preview and Output (Top Right) -->
+                <div style="position: sticky; top: 80px; max-height: calc(100vh - 90px); overflow-y: auto; padding-right: 10px;">
+                    
+                    <!-- Preview (Step 3: Top Right) -->
+                    <div class="terminal-box gsap-reveal" id="step-3">
+                        <div class="terminal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                                <span class="terminal-title">3_preview.view</span>
+                            </div>
+                            <!-- Preview Zoom Controls -->
+                            <div style="display: flex; gap: 0.3rem; align-items: center;">
+                                <button type="button" class="preview-zoom-btn active" onclick="setPreviewZoom('auto', this)" style="padding: 2px 7px; font-size: 0.75rem;">Auto</button>
+                                <button type="button" class="preview-zoom-btn" onclick="setPreviewZoom('1x', this)" style="padding: 2px 7px; font-size: 0.75rem;">1x</button>
+                                <button type="button" class="preview-zoom-btn" onclick="setPreviewZoom('2x', this)" style="padding: 2px 7px; font-size: 0.75rem;">2x</button>
+                                <button type="button" class="preview-zoom-btn" onclick="setPreviewZoom('4x', this)" style="padding: 2px 7px; font-size: 0.75rem;">4x</button>
+                                <button type="button" class="preview-zoom-btn" onclick="setPreviewZoom('8x', this)" style="padding: 2px 7px; font-size: 0.75rem;">8x</button>
+                            </div>
+                        </div>
+                        <div class="terminal-body" style="text-align: center;">
+                            <div class="no-file-selected msg">No images selected.</div>
+                            <div id="images-canvas-container" style="display: flex; flex-direction: column; align-items: center; gap: 1.25rem; overflow-x: auto; padding: 0.5rem 0;"></div>
+                            <p id="preview-note" class="note" style="display:none; margin-top: 0.5rem;">Click canvas to view full-size. Preview refreshes live with setting changes.</p>
+                        </div>
+                    </div>
+
+                    <!-- Output Formatting (Step 4: Below Preview in Right Column) -->
+                    <div class="terminal-box gsap-reveal" id="step-4" style="margin-top: 1.5rem; margin-bottom: 2rem;">
+                        <div class="terminal-header">
+                            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                            <span class="terminal-title">4_output.h</span>
+                        </div>
+                        <div class="terminal-body">
+                            <label style="display:block; margin-bottom: 1rem;">Draw mode:<br>
+                                <select id="drawMode" onchange="updateDrawMode(this)" style="width:100%; margin-top: 0.5rem;">
+                                    <option value="horizontal1bit">Horizontal - 1 bit per pixel (SSD1306 / Adafruit)</option>
+                                    <option value="vertical1bit">Vertical - 1 bit per pixel (U8g2 / PCD8544)</option>
+                                </select>
+                            </label>
+                            
+                            <label style="display:block; margin-bottom: 1rem;">Output format:<br>
+                                <select id="outputFormat" onchange="updateOutputFormat(this)" style="width:100%; margin-top: 0.5rem;">
+                                    <option value="plain">Plain bytes</option>
+                                    <option value="arduino" selected>Arduino code</option>
+                                    <option value="arduino_single">Arduino code, single bitmap</option>
+                                </select>
+                            </label>
+                            
+                            <div id="arduino-identifier" style="margin-bottom: 1rem; background: rgba(0,0,0,0.25); padding: 1rem; border-radius: 4px; border: 1px solid var(--surface-color);">
+                                <label>Identifier: <input id="identifier" type="text" value="epd_bitmap_"/></label><br><br>
+                                <label><input id="fullExample" type="checkbox" onchange="updateBoolean('fullExample')" /> Full Example</label><br>
+                                <label><input id="esp32Format" type="checkbox" onchange="updateBoolean('esp32Format')" /> ESP32 Format</label>
+                            </div>
+                            
+                            <hr style="border: 1px solid var(--surface-color); margin: 1rem 0;">
+                            
+                            <label><input id="outputComments" type="checkbox" checked onchange="updateBoolean('outputComments')"> Add comments</label><br>
+                            <label><input id="bitswap" type="checkbox" onchange="updateBoolean('bitswap')"> Swap bits (MSB->LSB)</label><br>
+                            <label><input id="showAsciiPreview" type="checkbox" onchange="updateBoolean('showAsciiPreview')"> Ascii preview</label><br>
+                            
+                            <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
+                                <label>Prefix: <input id="prefix" type="text" value="0x" style="width:60px;" oninput="updateString('prefix')"/></label>
+                                <label>Sep: <input id="separator" type="text" value=", " style="width:60px;" oninput="updateString('separator')"/></label>
+                                <label>Row wrap: <input id="bytesPerRow" type="number" min="0" value="16" style="width:70px;" oninput="updateInteger('bytesPerRow')"/></label>
+                            </div>
+                            
+                            <!-- Hidden elements needed by script.js but not exposed here -->
+                            <div style="display: none;">
+                                <div id="text-input-error"></div>
+                                <div id="read-images-note"></div>
+                                <input id="first-ascii-char" type="text" value="48"/>
+                                <input id="x-advance" type="text" value="0"/>
+                                <textarea id="byte-input"></textarea>
+                                <input id="text-input-width" value="128"/>
+                                <input id="text-input-height" value="64"/>
+                                <canvas id="text-input-preview-canvas"></canvas>
+                                <div id="format-caption-container"><div data-caption="plain"></div><div data-caption="arduino"></div><div data-caption="arduino_single"></div><div data-caption="adafruit_gfx"></div></div>
+                                <div id="adafruit-gfx-settings"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- End Right Column -->
+
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer style="margin-top: 4rem;">
+            <p>&copy; 2026 Necronlabs. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Zoom Handler Script -->
+    <script>
+        function setPreviewZoom(val, btn) {
+            window.currentPreviewZoom = val;
+            document.querySelectorAll('.preview-zoom-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            if (window.updateAllImages) {
+                window.updateAllImages();
+            }
+        }
+    </script>
+
+    <!-- Three.js and Vanta.js for Globe Effect -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.globe.min.js"></script>
+    <!-- Motion for Animations -->
+    <script src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
