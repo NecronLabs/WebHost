@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Necronlabs | About</title>
+
+    <!-- Google Fonts: Space Grotesk & Archivo & Pixel fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=VT323&family=Silkscreen:wght@400;700&family=DotGothic16&display=swap"
+        rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div id="vanta-bg"></div>
+
+    <!-- Header Full Width -->
+    <header>
+        <nav class="nav-links">
+            <a href="index.html#home" class="gsap-link">Home</a>
+            <a href="projects.html" class="gsap-link">Projects</a>
+            <a href="tools.html" class="gsap-link">Tools</a>
+            <a href="about.html" class="gsap-link active" style="color: var(--accent-color);">About Me</a>
+            <a href="contact.html" class="gsap-link">Contact</a>
+        </nav>
+        <div class="header-right" style="display: flex; align-items: center; gap: 1.5rem;">
+            <div class="social-links" style="display: flex; gap: 1rem; align-items: center;">
+                <a href="https://youtube.com/@necronlabs" target="_blank"
+                    style="color: var(--text-secondary); transition: color 0.2s;"
+                    onmouseover="this.style.color='var(--accent-red)'"
+                    onmouseout="this.style.color='var(--text-secondary)'">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z">
+                        </path>
+                        <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+                    </svg>
+                </a>
+                <a href="https://github.com/necronlabs" target="_blank"
+                    style="color: var(--text-secondary); transition: color 0.2s;"
+                    onmouseover="this.style.color='var(--text-primary)'"
+                    onmouseout="this.style.color='var(--text-secondary)'">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                        </path>
+                    </svg>
+                </a>
+            </div>
+            <div class="logo">
+                <a href="index.html"><img src="images/logo.jpg" alt="NecronLabs Logo"></a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="padding-top: 140px; min-height: 100vh;">
+
+        <!-- About Section -->
+        <section class="projects">
+            <h1 class="section-title gsap-reveal"
+                style="font-family: var(--font-pixel); font-size: clamp(3rem, 8vw, 5rem); color: var(--accent-red); margin-bottom: 3rem; text-align: left;">
+                Operator Profile</h1>
+
+            <div class="about-container">
+                <div class="about-image-wrapper gsap-reveal">
+                    <!-- Placeholder Profile Image -->
+                    <img src="https://placehold.co/600x750/18181b/ec4899?text=OPERATOR+IMAGE" alt="Profile Placeholder">
+                </div>
+
+                <div class="about-content">
+                    <div class="terminal-box gsap-reveal">
+                        <div class="terminal-header">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                            <span class="terminal-title">necronlabs@host: ~/bio</span>
+                        </div>
+                        <div class="terminal-body"
+                            style="font-family: 'VT323', monospace; font-size: 1.3rem; color: #a1a1aa;">
+                            <p><span style="color: var(--accent-red);">></span> Initiating profile sequence...</p>
+                            <p><span style="color: var(--accent-red);">></span> Loading operator data...</p>
+                            <br>
+                            <p>I am a systems engineer and hardware hacker specializing in Embedded Systems, C++
+                                , and IoT architecture.</p>
+                            <br>
+                            <p>My work bridges the gap between digital world and physical hardware. I design systems
+                                from the ground up—from PCB schematics and CAD modelling to low-level C firmware and
+                                cybernetic interfaces.</p>
+                            <br>
+                            <p>Current focus: exploiting the limits of modern microcontrollers, analyzing datasheets,
+                                and engineering custom-built peripherals for specialized
+                                operations.</p>
+                            <br>
+                            <p class="blinking-cursor"><span style="color: var(--accent-red);">></span> _</p>
+                        </div>
+                    </div>
+
+                    <h2 class="gsap-reveal"
+                        style="font-family: var(--font-pixel); margin-top: 3rem; margin-bottom: 1.5rem; color: #fff;">
+                        HARDWARE & ARSENAL</h2>
+                    <div class="skills-grid gsap-reveal">
+                        <span class="skill-tag">C/C++</span>
+                        <span class="skill-tag">Python</span>
+                        <span class="skill-tag">KiCad</span>
+                        <span class="skill-tag">EasyEDA</span>
+                        <span class="skill-tag">PCB Design</span>
+                        <span class="skill-tag">CAD Modelling</span>
+                        <span class="skill-tag">ESP-IDF</span>
+                        <span class="skill-tag">Raspberry Pi</span>
+                        <span class="skill-tag">SDRs</span>
+                        <span class="skill-tag">IoT Architecture</span>
+                        <span class="skill-tag">RF Security</span>
+                        <span class="skill-tag">Web Serial</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer style="margin-top: 4rem;">
+            <p>&copy; 2026 Necronlabs. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Three.js and Vanta.js for Globe Effect -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.globe.min.js"></script>
+
+    <!-- Motion for Animations -->
+    <script src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js"></script>
+    <!-- Custom JS -->
+    <script src="main.js"></script>
+</body>
+
+</html>
