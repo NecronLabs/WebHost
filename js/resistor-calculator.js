@@ -175,6 +175,14 @@ function updateGraphicAndCalculate() {
 
     // Graphic
     let graphicHtml = '';
+    let labelsHtml = `<defs>
+        <marker id="arrowUp" viewBox="0 0 10 10" refX="5" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 10 L 5 0 L 10 10 z" fill="var(--text-primary)" />
+        </marker>
+        <marker id="arrowDown" viewBox="0 0 10 10" refX="5" refY="10" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 5 10 L 10 0 z" fill="var(--text-primary)" />
+        </marker>
+    </defs>`;
     
     let bandPositions = [];
     if (currentBands === 4) {
@@ -189,11 +197,53 @@ function updateGraphicAndCalculate() {
         let cssColor = colorData.find(c => c.name === colorName).name;
         let fill = colorHex[cssColor] || '#000';
         let x = bandPositions[idx];
+        
         graphicHtml += `<rect x="${x}" y="0" width="16" height="120" fill="${fill}" />`;
+        
+        let label = '';
+        let isTop = false;
+        
+        if (currentBands === 4) {
+            if (idx === 0) label = '1st Band';
+            if (idx === 1) label = '2nd Band';
+            if (idx === 2) { label = 'Multiplier'; isTop = true; }
+            if (idx === 3) label = 'Tolerance';
+        } else if (currentBands === 5) {
+            if (idx === 0) label = '1st Band';
+            if (idx === 1) label = '2nd Band';
+            if (idx === 2) label = '3rd Band';
+            if (idx === 3) { label = 'Multiplier'; isTop = true; }
+            if (idx === 4) label = 'Tolerance';
+        } else if (currentBands === 6) {
+            if (idx === 0) label = '1st Band';
+            if (idx === 1) label = '2nd Band';
+            if (idx === 2) label = '3rd Band';
+            if (idx === 3) { label = 'Multiplier'; isTop = true; }
+            if (idx === 4) label = 'Tolerance';
+            if (idx === 5) { label = 'Temp Coeff'; isTop = true; }
+        }
+        
+        let cx = x + 8;
+        if (label) {
+            if (isTop) {
+                // Pointing down
+                labelsHtml += `<line x1="${cx}" y1="-10" x2="${cx}" y2="15" stroke="var(--text-primary)" stroke-width="2" marker-end="url(#arrowDown)"/>`;
+                labelsHtml += `<text x="${cx}" y="-15" fill="var(--text-primary)" font-size="14" font-family="var(--font-body)" text-anchor="middle">${label}</text>`;
+            } else {
+                // Pointing up
+                labelsHtml += `<line x1="${cx}" y1="130" x2="${cx}" y2="105" stroke="var(--text-primary)" stroke-width="2" marker-end="url(#arrowUp)"/>`;
+                labelsHtml += `<text x="${cx}" y="145" fill="var(--text-primary)" font-size="14" font-family="var(--font-body)" text-anchor="middle">${label}</text>`;
+            }
+        }
     });
     
     if (graphicBands) {
         graphicBands.innerHTML = graphicHtml;
+    }
+    
+    const graphicLabels = document.getElementById('resistor-graphic-labels');
+    if (graphicLabels) {
+        graphicLabels.innerHTML = labelsHtml;
     }
 
     // Calculation
