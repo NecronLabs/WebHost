@@ -176,11 +176,8 @@ function updateGraphicAndCalculate() {
     // Graphic
     let graphicHtml = '';
     let labelsHtml = `<defs>
-        <marker id="arrowUp" viewBox="0 0 10 10" refX="5" refY="0" markerWidth="6" markerHeight="6" orient="auto">
-            <path d="M 0 10 L 5 0 L 10 10 z" fill="var(--text-primary)" />
-        </marker>
-        <marker id="arrowDown" viewBox="0 0 10 10" refX="5" refY="10" markerWidth="6" markerHeight="6" orient="auto">
-            <path d="M 0 0 L 5 10 L 10 0 z" fill="var(--text-primary)" />
+        <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#e5e5e5" />
         </marker>
     </defs>`;
     
@@ -225,15 +222,38 @@ function updateGraphicAndCalculate() {
         
         let cx = x + 8;
         if (label) {
+            let textX = cx;
+            let textY = 0;
+            let lineY1 = 0;
+            let lineY2 = 0;
+            
             if (isTop) {
-                // Pointing down
-                labelsHtml += `<line x1="${cx}" y1="-10" x2="${cx}" y2="15" stroke="var(--text-primary)" stroke-width="2" marker-end="url(#arrowDown)"/>`;
-                labelsHtml += `<text x="${cx}" y="-15" fill="var(--text-primary)" font-size="14" font-family="var(--font-body)" text-anchor="middle">${label}</text>`;
+                lineY1 = -20;
+                lineY2 = 15;
+                textY = -25;
             } else {
-                // Pointing up
-                labelsHtml += `<line x1="${cx}" y1="130" x2="${cx}" y2="105" stroke="var(--text-primary)" stroke-width="2" marker-end="url(#arrowUp)"/>`;
-                labelsHtml += `<text x="${cx}" y="145" fill="var(--text-primary)" font-size="14" font-family="var(--font-body)" text-anchor="middle">${label}</text>`;
+                lineY1 = 130;
+                lineY2 = 105;
+                textY = 145;
+                
+                // Slant logic to prevent overlap
+                if (currentBands === 4) {
+                    if (idx === 0) textX = cx - 25;
+                    if (idx === 1) textX = cx + 15;
+                } else if (currentBands === 5) {
+                    if (idx === 0) textX = cx - 25;
+                    if (idx === 1) textX = cx;
+                    if (idx === 2) textX = cx + 25;
+                } else if (currentBands === 6) {
+                    if (idx === 0) textX = cx - 30;
+                    if (idx === 1) textX = cx - 10;
+                    if (idx === 2) textX = cx + 15;
+                    if (idx === 4) textX = cx; 
+                }
             }
+
+            labelsHtml += `<line x1="${textX}" y1="${lineY1}" x2="${cx}" y2="${lineY2}" stroke="#e5e5e5" stroke-width="2" marker-end="url(#arrow)"/>`;
+            labelsHtml += `<text x="${textX}" y="${textY}" fill="#e5e5e5" font-size="14" font-family="Arial, sans-serif" text-anchor="middle">${label}</text>`;
         }
     });
     
